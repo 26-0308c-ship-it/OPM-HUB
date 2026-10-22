@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    match /songs/{songId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Only an administrator can create/manage the admin allowlist.
+    // Add the first admin document manually in Firebase Console as described in README.
+    match /admins/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+  }
+}
